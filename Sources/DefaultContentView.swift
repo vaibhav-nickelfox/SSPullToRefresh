@@ -8,38 +8,38 @@
 
 import UIKit
 
-public class DefaultContentView: UIView, ContentView {
+open class DefaultContentView: UIView, ContentView {
 	
 	// MARK: - Properties
 	
-	public var state: RefreshView.State = .Closed {
+	open var state: RefreshView.State = .closed {
 		didSet {
 			updateState()
 		}
 	}
 	
-	public var progress: CGFloat = 0
-	public var lastUpdatedAt: NSDate?
+	open var progress: CGFloat = 0
+	open var lastUpdatedAt: Date?
 	
-	public let statusLabel: UILabel = {
+	open let statusLabel: UILabel = {
 		let label = UILabel()
-		label.font = .boldSystemFontOfSize(14)
-		label.textColor = .blackColor()
-		label.backgroundColor = .clearColor()
-		label.textAlignment = .Center
+		label.font = .boldSystemFont(ofSize: 14)
+		label.textColor = .black
+		label.backgroundColor = .clear
+		label.textAlignment = .center
 		return label
 	}()
 	
-	public let lastUpdatedAtLabel: UILabel = {
+	open let lastUpdatedAtLabel: UILabel = {
 		let label = UILabel()
-		label.font = .systemFontOfSize(12)
-		label.textColor = .lightGrayColor()
-		label.backgroundColor = .clearColor()
-		label.textAlignment = .Center
+		label.font = .systemFont(ofSize: 12)
+		label.textColor = .lightGray
+		label.backgroundColor = .clear
+		label.textAlignment = .center
 		return label
 	}()
 	
-	public let activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+	open let activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .gray)
 	
 	
 	// MARK: - Initializers
@@ -61,7 +61,7 @@ public class DefaultContentView: UIView, ContentView {
 	
 	// MARK: - UIView
 	
-	public override func layoutSubviews() {
+	open override func layoutSubviews() {
 		let width = bounds.width
 		
 		statusLabel.frame = CGRect(x: 0, y: 14, width: width, height: 20)
@@ -72,15 +72,15 @@ public class DefaultContentView: UIView, ContentView {
 	
 	// MARK: - Private
 	
-	private func updateState() {
+	fileprivate func updateState() {
 		switch state {
-		case .Closed, .Opening:
+		case .closed, .opening:
 			statusLabel.text = NSLocalizedString("Pull down to refresh…", comment: "")
 			activityIndicatorView.stopAnimating()
-		case.Ready:
+		case.ready:
 			statusLabel.text = NSLocalizedString("Release to refresh…", comment: "")
 			activityIndicatorView.stopAnimating()
-		case .Refreshing, .Closing:
+		case .refreshing, .closing:
 			statusLabel.text = NSLocalizedString("Loading…", comment: "")
 			activityIndicatorView.startAnimating()
 		}

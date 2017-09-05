@@ -8,29 +8,29 @@
 
 import UIKit
 
-public class SimpleContentView: UIView, ContentView {
+open class SimpleContentView: UIView, ContentView {
 
 	// MARK: - Properties
 
-	public var state: RefreshView.State = .Closed {
+	open var state: RefreshView.State = .closed {
 		didSet {
 			updateState()
 		}
 	}
 
-	public var progress: CGFloat = 0
-	public var lastUpdatedAt: NSDate?
+	open var progress: CGFloat = 0
+	open var lastUpdatedAt: Date?
 
-	public let statusLabel: UILabel = {
+	open let statusLabel: UILabel = {
 		let label = UILabel()
-		label.font = .boldSystemFontOfSize(14)
-		label.textColor = .blackColor()
-		label.backgroundColor = .clearColor()
-		label.textAlignment = .Center
+		label.font = .boldSystemFont(ofSize: 14)
+		label.textColor = .black
+		label.backgroundColor = .clear
+		label.textAlignment = .center
 		return label
 	}()
 
-	public let activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+	open let activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .gray)
 
 
 	// MARK: - Initializers
@@ -51,7 +51,7 @@ public class SimpleContentView: UIView, ContentView {
 
 	// MARK: - UIView
 
-	public override func layoutSubviews() {
+	open override func layoutSubviews() {
 		let size = bounds.size
 
 		statusLabel.frame = CGRect(x: 20, y: round((size.height - 30) / 2.0), width: size.width - 40, height: 30)
@@ -61,23 +61,23 @@ public class SimpleContentView: UIView, ContentView {
 
 	// MARK: - Private
 
-	private func updateState() {
+	fileprivate func updateState() {
 		switch state {
-		case .Closed, .Opening:
+		case .closed, .opening:
 			statusLabel.text = NSLocalizedString("Pull down to refresh", comment: "")
 			statusLabel.alpha = 1
 			activityIndicatorView.stopAnimating()
 			activityIndicatorView.alpha = 0
-		case.Ready:
+		case.ready:
 			statusLabel.text = NSLocalizedString("Release to refresh", comment: "")
 			statusLabel.alpha = 1
 			activityIndicatorView.stopAnimating()
 			activityIndicatorView.alpha = 0
-		case .Refreshing:
+		case .refreshing:
 			statusLabel.alpha = 0
 			activityIndicatorView.startAnimating()
 			activityIndicatorView.alpha = 1
-		case .Closing:
+		case .closing:
 			statusLabel.text = nil
 			activityIndicatorView.alpha = 0
 		}

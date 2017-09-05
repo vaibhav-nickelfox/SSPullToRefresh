@@ -28,25 +28,25 @@ import UIKit
 /// func refreshViewDidStartRefreshing(refreshView: RefreshView) {
 ///     refresh()
 /// }
-public class RefreshView: UIView {
+open class RefreshView: UIView {
 	
 	// MARK: - Types
 	
 	public enum State {
 		/// Offscreen.
-		case Closed
+		case closed
 		
 		/// The user started pulling. Most will say "Pull to refresh" in this state.
-		case Opening
+		case opening
 		
 		/// The user pulled far enough to cause a refresh. Most will say "Release to refresh" in this state.
-		case Ready
+		case ready
 		
 		/// The view is refreshing.
-		case Refreshing
+		case refreshing
 		
 		/// The refresh is completed. The view is now animating out.
-		case Closing
+		case closing
 	}
 
 	
@@ -54,10 +54,10 @@ public class RefreshView: UIView {
 	
 	/// The delegate is sent messages when the refresh view starts refreshing. This is automatically set with
 	/// `init(scrollView:delegate:)`.
-	public weak var delegate: RefreshViewDelegate?
+	open weak var delegate: RefreshViewDelegate?
 	
 	/// The scroll view containing the refresh view. This is automatically set with `init(scrollView:delegate:)`.
-	public weak var scrollView: UIScrollView? {
+	open weak var scrollView: UIScrollView? {
 		willSet {
 			guard let scrollView = scrollView else { return }
 			scrollView.removeObserver(self, forKeyPath: "contentOffset")
@@ -69,7 +69,7 @@ public class RefreshView: UIView {
 	}
 	
 	/// The content view displayed when the `scrollView` is pulled down.
-	public var contentView: ContentView {
+	open var contentView: ContentView {
 		willSet {
 			contentViewMinimumHeightConstraint = nil
 			contentView.view.removeFromSuperview()
@@ -81,17 +81,17 @@ public class RefreshView: UIView {
 	}
 
 	/// The state of the receiver.
-	public private(set) var state: State = .Closed {
+	open fileprivate(set) var state: State = .closed {
 		didSet {
-			let wasRefreshing = oldValue == .Refreshing
+			let wasRefreshing = oldValue == .refreshing
 
 			// Forward to content view
 			contentView.state = state
 
 			// Notify delegate
-			if wasRefreshing && state != .Refreshing {
+			if wasRefreshing && state != .refreshing {
 				delegate?.refreshViewDidFinishRefreshing(self)
-			} else if !wasRefreshing && state == .Refreshing {
+			} else if !wasRefreshing && state == .refreshing {
 				delegate?.refreshViewDidStartRefreshing(self)
 			}
 		}
@@ -100,7 +100,7 @@ public class RefreshView: UIView {
 	/// If you need to update the scroll view's content inset while it contains a refresh view, you should set the
 	/// `defaultContentInset` on the refresh view and it will forward it to the scroll view taking into account the
 	/// refresh view's position.
-	public var defaultContentInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) {
+	open var defaultContentInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) {
 		didSet {
 			updateTopContentInset(topInset)
 		}
@@ -111,34 +111,34 @@ public class RefreshView: UIView {
 	/// The `contentView`'s `sizeThatFits:` will be respected when displayed but does not effect the expanded height.
 	/// You can use this to draw outside of the expanded area. If you don't implement `sizeThatFits:` it will
 	/// automatically display at the default size.
-	public var expandedHeight: CGFloat = 64 {
+	open var expandedHeight: CGFloat = 64 {
 		didSet {
 			contentViewMinimumHeightConstraint?.constant = expandedHeight
 		}
 	}
 	
 	/// A boolean indicating if the pull to refresh view is expanded.
-	public private(set) var isExpanded = false {
+	open fileprivate(set) var isExpanded = false {
 		didSet {
 			updateTopContentInset(isExpanded ? expandedHeight : 0)
 		}
 	}
 
-	private var progress: CGFloat = 0 {
+	fileprivate var progress: CGFloat = 0 {
 		didSet {
 			contentView.progress = progress
 		}
 	}
 
 	// Semaphore is used to ensure only one animation plays at a time
-	private var animationSemaphore: dispatch_semaphore_t = {
-		let semaphore = dispatch_semaphore_create(0)
-		dispatch_semaphore_signal(semaphore)
+	fileprivate var animationSemaphore: DispatchSemaphore = {
+		let semaphore = DispatchSemaphore(value: 0)
+		semaphore.signal()
 		return semaphore
 	}()
 
-	private var topInset: CGFloat = 0
-	private var contentViewMinimumHeightConstraint: NSLayoutConstraint?
+	fileprivate var topInset: CGFloat = 0
+	fileprivate var contentViewMinimumHeightConstraint: NSLayoutConstraint?
 
 
 	// MARK: - Initializers
@@ -172,7 +172,7 @@ public class RefreshView: UIView {
 
 	// MARK: - UIView
 
-	public override func removeFromSuperview() {
+	open override func removeFromSuperview() {
 		scrollView = nil
 		super.removeFromSuperview()
 	}
@@ -183,26 +183,26 @@ public class RefreshView: UIView {
 	/// Call this method when you start refresing. If you trigger refresing another way besides pulling, call this
 	/// method so the receiver will be in sync with the refreshing status. By default, it will not expand the view so it
 	/// loads quietly out of view.
-	public func startRefreshing(expand: Bool = false, animated: Bool = true, completion: (() -> Void)? = nil) {
+	open func startRefreshing(_ expand: Bool = false, animated: Bool = true, completion: (() -> Void)? = nil) {
 		// If we're already refreshing, don't do anything.
-		if state == .Refreshing {
+		if state == .refreshing {
 			return
 		}
 
 		// Animate back to the refreshing state
-		set(state: .Refreshing, animated: animated, expand: expand, completion: completion)
+		set(state: .refreshing, animated: animated, expand: expand, completion: completion)
 	}
 
 	/// Call this when you finish refresing.
-	public func finishRefreshing(animated: Bool = true, completion: (() -> Void)? = nil) {
+	open func finishRefreshing(_ animated: Bool = true, completion: (() -> Void)? = nil) {
 		// If we're not refreshing, don't do anything.
-		if state != .Refreshing {
+		if state != .refreshing {
 			return
 		}
 
 		// Animate back to the normal state
-		set(state: .Closing, animated: animated, expand: false) { [weak self] in
-			self?.state = .Closed
+		set(state: .closing, animated: animated, expand: false) { [weak self] in
+			self?.state = .closed
 			completion?()
 		}
 
@@ -211,30 +211,30 @@ public class RefreshView: UIView {
 
 	/// Manually update the last updated at time. This will automatically get called when the refresh view finishes
 	/// refreshing.
-	public func invalidateLastUpdatedAt() {
-		let date = delegate?.lastUpdatedAtForRefreshView(self) ?? NSDate()
+	open func invalidateLastUpdatedAt() {
+		let date = delegate?.lastUpdatedAtForRefreshView(self) ?? Date()
 		contentView.lastUpdatedAt = date
 	}
 
 
 	// MARK: - Private
 
-	private func scrollViewDidChange() {
+	fileprivate func scrollViewDidChange() {
 		guard let scrollView = scrollView else { return }
 		defaultContentInsets = scrollView.contentInset
 		scrollView.addSubview(self)
 
-		NSLayoutConstraint.activateConstraints([
-			leadingAnchor.constraintEqualToAnchor(scrollView.leadingAnchor),
-			widthAnchor.constraintEqualToAnchor(scrollView.widthAnchor),
-			bottomAnchor.constraintEqualToAnchor(scrollView.topAnchor),
-			heightAnchor.constraintEqualToConstant(400)
+		NSLayoutConstraint.activate([
+			leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+			widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+			bottomAnchor.constraint(equalTo: scrollView.topAnchor),
+			heightAnchor.constraint(equalToConstant: 400)
 		])
 
-		scrollView.addObserver(self, forKeyPath: "contentOffset", options: .New, context: nil)
+		scrollView.addObserver(self, forKeyPath: "contentOffset", options: .new, context: nil)
 	}
 
-	private func contentViewDidChange() {
+	fileprivate func contentViewDidChange() {
 		contentView.state = state
 		contentView.progress = progress
 		invalidateLastUpdatedAt()
@@ -242,18 +242,18 @@ public class RefreshView: UIView {
 
 		contentView.view.translatesAutoresizingMaskIntoConstraints = false
 
-		let minumumHeightConstraint = contentView.view.heightAnchor.constraintGreaterThanOrEqualToConstant(expandedHeight)
+		let minumumHeightConstraint = contentView.view.heightAnchor.constraint(greaterThanOrEqualToConstant: expandedHeight)
 		contentViewMinimumHeightConstraint = minumumHeightConstraint
 
-		NSLayoutConstraint.activateConstraints([
-			contentView.view.bottomAnchor.constraintEqualToAnchor(bottomAnchor),
-			contentView.view.leadingAnchor.constraintEqualToAnchor(leadingAnchor),
-			contentView.view.trailingAnchor.constraintEqualToAnchor(trailingAnchor),
+		NSLayoutConstraint.activate([
+			contentView.view.bottomAnchor.constraint(equalTo: bottomAnchor),
+			contentView.view.leadingAnchor.constraint(equalTo: leadingAnchor),
+			contentView.view.trailingAnchor.constraint(equalTo: trailingAnchor),
 			minumumHeightConstraint
 		])
 	}
 
-	private func updateTopContentInset(topInset: CGFloat) {
+	fileprivate func updateTopContentInset(_ topInset: CGFloat) {
 		self.topInset = topInset
 
 		// Default to the scroll view's initial content inset
@@ -280,7 +280,7 @@ public class RefreshView: UIView {
 		delegate?.refreshView(self, didUpdateContentInset: scrollView.contentInset)
 	}
 
-	private func set(state to: State, animated: Bool, expand: Bool, completion: (() -> Void)? = nil) {
+	fileprivate func set(state to: State, animated: Bool, expand: Bool, completion: (() -> Void)? = nil) {
 		let from = state
 
 		delegate?.refreshView(self, willTransitionTo: to, from: from, animated: animated)
@@ -294,19 +294,19 @@ public class RefreshView: UIView {
 		}
 
 		// Go to a background queue to wait for previous animations to finish
-		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)) { [weak self] in
+		DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.low).async { [weak self] in
 			// Wait for previous animations to finish
 			guard let semaphore = self?.animationSemaphore else { return }
-			dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
+			semaphore.wait(timeout: DispatchTime.distantFuture)
 
 			// Previous animations are finished. Go back to the main queue.
-			dispatch_async(dispatch_get_main_queue()) {
+			DispatchQueue.main.async {
 				// Animate the change
-				UIView.animateKeyframesWithDuration(0.3, delay: 0, options: .AllowUserInteraction, animations: {
+				UIView.animateKeyframes(withDuration: 0.3, delay: 0, options: .allowUserInteraction, animations: {
 					self?.state = to
 					self?.isExpanded = expand
 				}, completion: { _ in
-					dispatch_semaphore_signal(semaphore)
+					semaphore.signal()
 					completion?()
 
 					if let this = self {
@@ -320,67 +320,67 @@ public class RefreshView: UIView {
 
 	// MARK: - NSKeyValueObserving
 
-	public override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+	open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
 		// Call super if we didn't register for this notification
 		if keyPath != "contentOffset" {
-			super.observeValueForKeyPath(keyPath, ofObject: object, change: change, context: context)
+			super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
 			return
 		}
 
 		// Get the offset out of the change notification
-		guard let offsetY = (change?[NSKeyValueChangeNewKey] as? NSValue)?.CGPointValue().y,
-			scrollView = scrollView
+		guard let offsetY = (change?[NSKeyValueChangeKey.newKey] as? NSValue)?.cgPointValue.y,
+			let scrollView = scrollView
 		else { return }
 
 		let y = offsetY + defaultContentInsets.top
 
 		// Scroll view is dragging
-		if scrollView.dragging {
+		if scrollView.isDragging {
 			// Scroll view is ready
-			if state == .Ready {
+			if state == .ready {
 				// Update the content view's pulling progressing
 				progress = -y / expandedHeight
 
 				// Dragged enough to refresh
 				if y > -expandedHeight && y < 0 {
-					state = .Closed
+					state = .closed
 				}
 			}
 
 			// Scroll view is normal
-			else if state == .Closed {
+			else if state == .closed {
 				// Update the content view's pulling progressing
 				progress = -y / expandedHeight
 
 				// Dragged enough to be ready
 				if y < -expandedHeight {
-					state = .Ready
+					state = .ready
 				}
 			}
 
 			// Scroll view is refreshing
-			else if state == .Refreshing {
+			else if state == .refreshing {
 				let insetAdjustment = y < 0 ? max(0, expandedHeight + y) : expandedHeight
 				updateTopContentInset(expandedHeight - insetAdjustment)
 			}
 			return
-		} else if scrollView.decelerating {
+		} else if scrollView.isDecelerating {
 			progress = -y / self.expandedHeight
 		}
 
 		// If the scroll view isn't ready, we're not interested
-		if state != .Ready {
+		if state != .ready {
 			return
 		}
 
 		// We're ready, prepare to switch to refreshing. By default, we should refresh.
-		var newState = State.Refreshing
+		var newState = State.refreshing
 
 		// Ask the delegate if it's cool to start refreshing
 		var expand = true
-		if let delegate = delegate where !delegate.refreshViewShouldStartRefreshing(self) {
+		if let delegate = delegate, !delegate.refreshViewShouldStartRefreshing(self) {
 			// Animate back to normal since the delegate said no
-			newState = .Closed
+			newState = .closed
 			expand = false
 		}
 
